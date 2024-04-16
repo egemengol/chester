@@ -1,3 +1,4 @@
+mod core_structs;
 mod v4_manager;
 mod v4_messages;
 
