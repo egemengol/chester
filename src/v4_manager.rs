@@ -29,7 +29,7 @@ async fn recv_connected_msg(
     };
     let connected: v4_messages::Connected =
         serde_json::from_str(&text).context("'connected' message must be valid")?;
-    println!("Connected!");
+    eprintln!("Connected to dydx!");
     Ok(connected)
 }
 
@@ -47,7 +47,7 @@ async fn send_subscribe_msg(
             subscribe_json,
         ))
         .await?;
-    println!(
+    eprintln!(
         "Subscribed to market: {}",
         serde_json::to_string(&market).unwrap()
     );
@@ -72,59 +72,60 @@ async fn send_subscribe_msg(
 //     Ok(())
 // }
 
-async fn keep_orderbook(
-    read: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
-) -> anyhow::Result<()> {
-    let msg_first = read
-        .next()
-        .await
-        .context("first orderbook message could not be received")?;
+// async fn keep_orderbook(
+//     read: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+// ) -> anyhow::Result<()> {
+//     let msg_first = read
+//         .next()
+//         .await
+//         .context("first orderbook message could not be received")?;
 
-    let got_json = match msg_first {
-        Err(e) => unimplemented!("received error during orderbook updates: {}", e),
-        Ok(tokio_tungstenite::tungstenite::Message::Text(t)) => t,
-        Ok(_) => unimplemented!("received nontext message during orderbook updates"),
-    };
-    let subscribed: v4_messages::Subscribed =
-        serde_json::from_str(&got_json).expect("could not deserialize during orderbook incoming");
+//     let got_json = match msg_first {
+//         Err(e) => unimplemented!("received error during orderbook updates: {}", e),
+//         Ok(tokio_tungstenite::tungstenite::Message::Text(t)) => t,
+//         Ok(_) => unimplemented!("received nontext message during orderbook updates"),
+//     };
+//     let subscribed: v4_messages::Subscribed =
+//         serde_json::from_str(&got_json).expect("could not deserialize during orderbook incoming");
 
-    let mut orderbook: OrderBookState = subscribed.into();
+//     let mut orderbook: OrderBookState = subscribed.into();
 
-    while let Some(msg) = read.next().await {
-        let got_json = match msg {
-            Err(e) => unimplemented!("received error during orderbook updates: {}", e),
-            Ok(tokio_tungstenite::tungstenite::Message::Text(t)) => t,
-            Ok(_) => unimplemented!("received nontext message during orderbook updates"),
-        };
-        let got: v4_messages::OrderbookIncomingMessages = serde_json::from_str(&got_json)
-            .expect("could not deserialize during orderbook incoming");
-        match got {
-            v4_messages::OrderbookIncomingMessages::Subscribed(subscribed) => {
-                let mut new_orderbook: OrderBookState = subscribed.into();
-                std::mem::swap(&mut orderbook, &mut new_orderbook)
-            }
-            v4_messages::OrderbookIncomingMessages::ChannelBatchData(channel_batch_data) => {
-                channel_batch_data.update_orderbook(&mut orderbook)?;
-            }
-        }
-        println!("{}", serde_json::to_string(&orderbook)?)
-    }
-    Ok(())
-}
+//     while let Some(msg) = read.next().await {
+//         let got_json = match msg {
+//             Err(e) => unimplemented!("received error during orderbook updates: {}", e),
+//             Ok(tokio_tungstenite::tungstenite::Message::Text(t)) => t,
+//             Ok(_) => unimplemented!("received nontext message during orderbook updates"),
+//         };
+//         let got: v4_messages::OrderbookIncomingMessages = serde_json::from_str(&got_json)
+//             .expect("could not deserialize during orderbook incoming");
+//         match got {
+//             v4_messages::OrderbookIncomingMessages::Subscribed(subscribed) => {
+//                 let mut new_orderbook: OrderBookState = subscribed.into();
+//                 std::mem::swap(&mut orderbook, &mut new_orderbook)
+//             }
+//             v4_messages::OrderbookIncomingMessages::ChannelBatchData(channel_batch_data) => {
+//                 channel_batch_data.update_orderbook(&mut orderbook)?;
+//             }
+//         }
+//         println!("{}", serde_json::to_string(&orderbook)?)
+//     }
+//     Ok(())
+// }
 
-pub async fn subscribe_to_orderbook(market: v4_messages::Market) -> anyhow::Result<()> {
-    let (stream, _) = connect_async(TESTNET_INDEXER_WS_HOST)
-        .await
-        .context("Failed to connect")?;
+// pub async fn subscribe_to_orderbook(market: v4_messages::Market) -> anyhow::Result<()> {
+//     let (stream, _) = connect_async(TESTNET_INDEXER_WS_HOST)
+//         .await
+//         .context("Failed to connect")?;
 
-    let (mut write, mut read) = stream.split();
+//     let (mut write, mut read) = stream.split();
 
-    let _ = recv_connected_msg(&mut read).await?;
-    send_subscribe_msg(&mut write, market).await?;
-    keep_orderbook(&mut read).await?;
+//     let _ = recv_connected_msg(&mut read).await?;
+//     send_subscribe_msg(&mut write, market).await?;
+//     keep_orderbook(&mut read).await?;
 
-    Ok(())
-}
+//     Ok(())
+// }
+
 async fn streaming_keep_orderbook(
     read: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
 ) -> anyhow::Result<impl Stream<Item = String> + '_> {
@@ -209,6 +210,9 @@ impl StreamOrderBook {
 
     pub async fn stream(&mut self) -> anyhow::Result<impl Stream<Item = std::string::String> + '_> {
         let orderbooks = streaming_keep_orderbook(&mut self.read).await?;
-        Ok(orderbooks)
+        Ok(orderbooks.map(|s| {
+            println!("{}", s);
+            s
+        }))
     }
 }
