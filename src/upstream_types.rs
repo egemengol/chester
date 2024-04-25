@@ -1,7 +1,7 @@
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::core_structs::{self, OrderBookState};
+use crate::core_types::{self, OrderBookState};
 
 #[derive(Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
@@ -16,10 +16,15 @@ pub enum SocketChannel {
     Orderbook,
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
+#[allow(clippy::enum_variant_names)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone, Eq, PartialOrd, Ord)]
 pub enum Market {
     #[serde(rename = "ETH-USD")]
     EthUsd,
+    #[serde(rename = "BTC-USD")]
+    BtcUsd,
+    #[serde(rename = "SOL-USD")]
+    SolUsd,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
@@ -52,22 +57,22 @@ pub struct Subscribed {
     pub contents: ContentPiece,
 }
 
-#[allow(clippy::from_over_into)]
-impl Into<OrderBookState> for Subscribed {
-    fn into(self) -> OrderBookState {
-        let asks: Option<Vec<core_structs::Offer>> = self.contents.asks.map(|v4asks| {
+// #[allow(clippy::from_over_into)]
+impl From<Subscribed> for OrderBookState {
+    fn from(val: Subscribed) -> Self {
+        let asks: Option<Vec<core_types::Offer>> = val.contents.asks.map(|v4asks| {
             v4asks
                 .into_iter()
-                .map(|v4offer| core_structs::Offer {
+                .map(|v4offer| core_types::Offer {
                     price: v4offer.price,
                     size: v4offer.size,
                 })
                 .collect()
         });
-        let bids: Option<Vec<core_structs::Offer>> = self.contents.bids.map(|v4bids| {
+        let bids: Option<Vec<core_types::Offer>> = val.contents.bids.map(|v4bids| {
             v4bids
                 .into_iter()
-                .map(|v4offer| core_structs::Offer {
+                .map(|v4offer| core_types::Offer {
                     price: v4offer.price,
                     size: v4offer.size,
                 })
@@ -76,7 +81,8 @@ impl Into<OrderBookState> for Subscribed {
         OrderBookState::construct_from(
             asks.unwrap_or_default(),
             bids.unwrap_or_default(),
-            self.message_id,
+            val.message_id,
+            val.market,
         )
     }
 }
@@ -93,17 +99,17 @@ pub struct ChannelBatchData {
 
 impl ChannelBatchData {
     pub fn update_orderbook(self, orderbook: &mut OrderBookState) -> anyhow::Result<()> {
-        let mut asks: Vec<core_structs::Offer> = Vec::default();
-        let mut bids: Vec<core_structs::Offer> = Vec::default();
+        let mut asks: Vec<core_types::Offer> = Vec::default();
+        let mut bids: Vec<core_types::Offer> = Vec::default();
         for piece in self.contents {
             if let Some(v4asks) = piece.asks {
-                asks.extend(v4asks.into_iter().map(|v4offer| core_structs::Offer {
+                asks.extend(v4asks.into_iter().map(|v4offer| core_types::Offer {
                     price: v4offer.price,
                     size: v4offer.size,
                 }))
             }
             if let Some(v4bids) = piece.bids {
-                bids.extend(v4bids.into_iter().map(|v4offer| core_structs::Offer {
+                bids.extend(v4bids.into_iter().map(|v4offer| core_types::Offer {
                     price: v4offer.price,
                     size: v4offer.size,
                 }))

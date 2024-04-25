@@ -4,6 +4,8 @@ use rust_decimal::Decimal;
 use serde::ser::SerializeStruct;
 use serde::Serialize;
 
+use crate::upstream_types::Market;
+
 #[derive(Debug)]
 pub struct Offer {
     pub price: Decimal,
@@ -13,6 +15,7 @@ pub struct Offer {
 #[derive(Debug)]
 pub struct OrderBookState {
     epoch: usize,
+    pub market: Market,
     pub asks: BTreeMap<Decimal, Decimal>,
     pub bids: BTreeMap<Decimal, Decimal>,
 }
@@ -23,6 +26,7 @@ impl Serialize for OrderBookState {
         S: serde::Serializer,
     {
         let mut out = serializer.serialize_struct("OrderBook", 2)?;
+        out.serialize_field("market", &self.market)?;
         let asks: Vec<(Decimal, Decimal)> = self
             .asks
             .iter()
@@ -41,7 +45,12 @@ impl Serialize for OrderBookState {
 }
 
 impl OrderBookState {
-    pub fn construct_from(asks: Vec<Offer>, bids: Vec<Offer>, epoch: usize) -> Self {
+    pub fn construct_from(
+        asks: Vec<Offer>,
+        bids: Vec<Offer>,
+        epoch: usize,
+        market: Market,
+    ) -> Self {
         let map_asks = asks
             .into_iter()
             .filter(|offer| offer.size != Decimal::ZERO)
@@ -56,6 +65,7 @@ impl OrderBookState {
             asks: map_asks,
             bids: map_bids,
             epoch,
+            market,
         }
     }
 

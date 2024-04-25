@@ -1,75 +1,65 @@
+// use anyhow::Context;
+// use serde::Deserialize;
+// use v4_manager::StreamOrderBook;
+
 use anyhow::Context;
-use v4_manager::StreamOrderBook;
-
-mod core_structs;
-mod v4_manager;
-mod v4_messages;
-
 use futures_util::StreamExt;
+use serde::Deserialize;
+use upstream::OrderBookStream;
+use upstream_types::Market;
 
-// #[tokio::main]
-// async fn main() -> anyhow::Result<()> {
-//     // v4_manager::subscribe_to_orderbook(v4_messages::Market::EthUsd).await
-//     let mut stream = StreamOrderBook::start(v4_messages::Market::EthUsd).await?;
-//     let mut stream = stream.stream().await?;
-//     while let Some(orderbook_json) = stream.next().await {
-//         println!("{}", &orderbook_json);
-//     }
-//     Ok(())
-// }
+mod core_types;
+mod upstream;
+mod upstream_types;
 
 use axum::{
     extract::ws::{Message, WebSocket, WebSocketUpgrade},
+    http::StatusCode,
     response::Response,
     routing::get,
     Router,
 };
+use axum_extra::extract::Query;
 
-async fn handler(ws: WebSocketUpgrade) -> Response {
-    ws.on_upgrade(handle_socket)
+#[derive(Deserialize, Debug)]
+struct WSParams {
+    #[serde(rename = "market")]
+    markets: Vec<Market>,
 }
 
-fn jsonify_market(t: &str) -> String {
-    let mut jsonified = String::new();
-    if !t.starts_with('"') {
-        jsonified.push('"');
+async fn handler(ws: WebSocketUpgrade, Query(params): Query<WSParams>) -> Response {
+    if params.markets.is_empty() {
+        return Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body("No markets provided".into())
+            .unwrap();
     }
-    jsonified.push_str(t.trim_end());
-    if !t.ends_with('"') {
-        jsonified.push('"');
-    }
-    jsonified
+    ws.on_upgrade(move |websocket| handle_socket(websocket, params.markets))
+    // ws.on_upgrade(nofusshandlesocket)
 }
 
-async fn handle_socket(mut socket: WebSocket) {
-    let got_first = socket.recv().await;
-    let got_first_text = match got_first {
-        None => return, // client disconnect
-        Some(Err(e)) => panic!("{}", e),
-        Some(Ok(Message::Text(t))) => t,
-        Some(Ok(_)) => {
-            panic!("Got non-text message while waiting for market");
-        }
-    };
-    let got_first_text = jsonify_market(&got_first_text);
+// async fn nofusshandlesocket(mut socket: WebSocket) {
+//     socket
+//         .send(Message::Text("hi".to_string()))
+//         .await
+//         .expect("send");
+//     socket.close().await.unwrap();
+// }
 
-    let market: v4_messages::Market = serde_json::from_str(&got_first_text)
-        .context("Could not parse market")
-        .unwrap();
-
-    let mut stream = StreamOrderBook::start(market)
+async fn handle_socket(mut socket: WebSocket, markets: Vec<Market>) {
+    let mut stream = OrderBookStream::subscribe(&markets)
         .await
-        .context("Starting orderbook stream failed")
-        .unwrap();
-    let mut stream = stream
-        .stream()
-        .await
-        .context("Streaming the orderbook stream failed")
+        .context("subscribing to markets in handle_socket")
         .unwrap();
 
-    while let Some(orderbook_json) = stream.next().await {
+    while let Ok(orderbook_json) = stream
+        .next()
+        .await
+        .context("stream should be unending")
+        .unwrap()
+    {
         let send_result = socket.send(Message::Text(orderbook_json)).await;
-        if let Err(_) = send_result {
+        if send_result.is_err() {
             eprintln!("User disconnected");
             return;
         }
@@ -79,11 +69,21 @@ async fn handle_socket(mut socket: WebSocket) {
 #[tokio::main]
 async fn main() {
     // build our application with a single route
-    let app = Router::new().route("/ws", get(handler));
+    let app = Router::new().route("/", get(handler));
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:7878").await.unwrap();
-    eprintln!("Hit the websocket connection on ws://127.0.0.1:7878/ws");
-    eprintln!("Send a text message like ETH-USD, then wait for orderbook snapshots.");
+    eprintln!(
+        "Hit the websocket connection like ws://127.0.0.1:7878/?market=ETH-USD&market=BTC-USD"
+    );
     axum::serve(listener, app).await.unwrap();
 }
+
+// #[tokio::main]
+// async fn main() -> anyhow::Result<()> {
+//     let mut stream = OrderBookStream::subscribe(&[Market::EthUsd, Market::BtcUsd]).await?;
+//     while let Ok(orderbook_json) = stream.next().await.context("unending stream")? {
+//         println!("{}", &orderbook_json);
+//     }
+//     Ok(())
+// }
