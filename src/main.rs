@@ -71,10 +71,13 @@ async fn main() {
     // build our application with a single route
     let app = Router::new().route("/", get(handler));
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:7878").await.unwrap();
+    let port = std::env::var("PORT").unwrap_or_else(|_| String::from("80"));
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
     eprintln!(
-        "Hit the websocket connection like ws://127.0.0.1:7878/?market=ETH-USD&market=BTC-USD"
+        "Hit the websocket connection like ws://127.0.0.1:{}/?market=ETH-USD&market=BTC-USD",
+        port
     );
     axum::serve(listener, app).await.unwrap();
 }
