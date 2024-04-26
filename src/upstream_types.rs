@@ -19,12 +19,134 @@ pub enum SocketChannel {
 #[allow(clippy::enum_variant_names)]
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone, Eq, PartialOrd, Ord)]
 pub enum Market {
-    #[serde(rename = "ETH-USD")]
-    EthUsd,
+    #[serde(rename = "AAVE-USD")]
+    AaveUsd,
+    #[serde(rename = "ADA-USD")]
+    AdaUsd,
+    #[serde(rename = "AEVO-USD")]
+    AevoUsd,
+    #[serde(rename = "AGIX-USD")]
+    AgixUsd,
+    #[serde(rename = "ALGO-USD")]
+    AlgoUsd,
+    #[serde(rename = "APE-USD")]
+    ApeUsd,
+    #[serde(rename = "APT-USD")]
+    AptUsd,
+    #[serde(rename = "ARB-USD")]
+    ArbUsd,
+    #[serde(rename = "ARKM-USD")]
+    ArkmUsd,
+    #[serde(rename = "ASTR-USD")]
+    AstrUsd,
+    #[serde(rename = "ATOM-USD")]
+    AtomUsd,
+    #[serde(rename = "AVAX-USD")]
+    AvaxUsd,
+    #[serde(rename = "AXL-USD")]
+    AxlUsd,
+    #[serde(rename = "BCH-USD")]
+    BchUsd,
+    #[serde(rename = "BONK-USD")]
+    BonkUsd,
+    #[serde(rename = "BLUR-USD")]
+    BlurUsd,
+    #[serde(rename = "BNB-USD")]
+    BnbUsd,
+    #[serde(rename = "CHZ-USD")]
+    ChzUsd,
     #[serde(rename = "BTC-USD")]
     BtcUsd,
+    #[serde(rename = "COMP-USD")]
+    CompUsd,
+    #[serde(rename = "CRV-USD")]
+    CrvUsd,
+    #[serde(rename = "DOGE-USD")]
+    DogeUsd,
+    #[serde(rename = "DOT-USD")]
+    DotUsd,
+    #[serde(rename = "DYM-USD")]
+    DymUsd,
+    #[serde(rename = "EOS-USD")]
+    EosUsd,
+    #[serde(rename = "ETC-USD")]
+    EtcUsd,
+    #[serde(rename = "ETH-USD")]
+    EthUsd,
+    #[serde(rename = "FET-USD")]
+    FetUsd,
+    #[serde(rename = "FIL-USD")]
+    FilUsd,
+    #[serde(rename = "GRT-USD")]
+    GrtUsd,
+    #[serde(rename = "HBAR-USD")]
+    HbarUsd,
+    #[serde(rename = "ICP-USD")]
+    IcpUsd,
+    #[serde(rename = "IMX-USD")]
+    ImxUsd,
+    #[serde(rename = "INJ-USD")]
+    InjUsd,
+    #[serde(rename = "JTO-USD")]
+    JtoUsd,
+    #[serde(rename = "JUP-USD")]
+    JupUsd,
+    #[serde(rename = "LDO-USD")]
+    LdoUsd,
+    #[serde(rename = "LINK-USD")]
+    LinkUsd,
+    #[serde(rename = "LTC-USD")]
+    LtcUsd,
+    #[serde(rename = "MANA-USD")]
+    ManaUsd,
+    #[serde(rename = "MATIC-USD")]
+    MaticUsd,
+    #[serde(rename = "MKR-USD")]
+    MkrUsd,
+    #[serde(rename = "NEAR-USD")]
+    NearUsd,
+    #[serde(rename = "ORDI-USD")]
+    OrdiUsd,
+    #[serde(rename = "OP-USD")]
+    OpUsd,
+    #[serde(rename = "PEPE-USD")]
+    PepeUsd,
+    #[serde(rename = "PYTH-USD")]
+    PythUsd,
+    #[serde(rename = "RNDR-USD")]
+    RndrUsd,
+    #[serde(rename = "RUNE-USD")]
+    RuneUsd,
+    #[serde(rename = "SEI-USD")]
+    SeiUsd,
+    #[serde(rename = "SHIB-USD")]
+    ShibUsd,
+    #[serde(rename = "SNX-USD")]
+    SnxUsd,
     #[serde(rename = "SOL-USD")]
     SolUsd,
+    #[serde(rename = "STRK-USD")]
+    StrkUsd,
+    #[serde(rename = "STX-USD")]
+    StxUsd,
+    #[serde(rename = "SUI-USD")]
+    SuiUsd,
+    #[serde(rename = "TIA-USD")]
+    TiaUsd,
+    #[serde(rename = "TRX-USD")]
+    TrxUsd,
+    #[serde(rename = "UNI-USD")]
+    UniUsd,
+    #[serde(rename = "WLD-USD")]
+    WldUsd,
+    #[serde(rename = "WOO-USD")]
+    WooUsd,
+    #[serde(rename = "XLM-USD")]
+    XlmUsd,
+    #[serde(rename = "XRP-USD")]
+    XrpUsd,
+    #[serde(rename = "DYDX-USD")]
+    DydxUsd,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

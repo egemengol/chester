@@ -16,6 +16,7 @@ use crate::{
 };
 
 const TESTNET_INDEXER_WS_HOST: &str = "wss://dydx-testnet.imperator.co/v4/ws";
+const PROD_INDEXER_WS_HOST: &str = "wss://indexer.dydx.trade/v4/ws";
 
 async fn recv_connected_msg(
     read: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
@@ -114,7 +115,7 @@ pub struct OrderBookStream {
 
 impl OrderBookStream {
     pub async fn subscribe(markets: &[Market]) -> anyhow::Result<Self> {
-        let (stream, _) = connect_async(TESTNET_INDEXER_WS_HOST)
+        let (stream, _) = connect_async(PROD_INDEXER_WS_HOST)
             .await
             .context("Failed to connect")?;
 
